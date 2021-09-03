@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:quiz/quiz_brain.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 void main() {
   runApp(Quiz());
@@ -15,7 +17,7 @@ class Quiz extends StatelessWidget {
         body: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.0),
-            child: quizPage(),
+            child: QuizPage(),
           ),
         ),
       ),
@@ -23,14 +25,18 @@ class Quiz extends StatelessWidget {
   }
 }
 
-class quizPage extends StatefulWidget {
-  const quizPage({ Key? key }) : super(key: key);
+class QuizPage extends StatefulWidget {
+  const QuizPage({ Key? key }) : super(key: key);
 
   @override
-  _quizPageState createState() => _quizPageState();
+  _QuizPageState createState() => _QuizPageState();
 }
 
-class _quizPageState extends State<quizPage> {
+class _QuizPageState extends State<QuizPage> {
+   QuizBrain quizBrain = QuizBrain();
+
+   List<Icon> scoreKeeper = [];
+   
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -42,7 +48,8 @@ class _quizPageState extends State<quizPage> {
           child: 
           Padding(
             padding: const EdgeInsets.all(10.0),
-            child: Text('Aqui virá o texto da pergunta.',
+            child: Text(
+              quizBrain.getQuestionText(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20.0,
@@ -65,7 +72,7 @@ class _quizPageState extends State<quizPage> {
                 ),
               ),
               onPressed: () {
-                print('Verdadeiro foi pressionado.');
+                checkAnswer(true);
               },
             ),
           ),
@@ -85,7 +92,7 @@ class _quizPageState extends State<quizPage> {
                   ),
                 ),
                 onPressed: () {
-                  print('Falso foi pressionado.');
+                  checkAnswer(false);
                 },
               ),
             ),
@@ -93,19 +100,53 @@ class _quizPageState extends State<quizPage> {
         Padding(
           padding: const EdgeInsets.all(10.0),
           child: Row(
-          children: [
-            Icon(
-              Icons.check,
-              color: Colors.green,
-            ),
-            Icon(
-              Icons.close,
-              color: Colors.red,
-            ),
-          ],
+          children: scoreKeeper,
           ),
         ),
       ],
     );
+  }
+
+  void checkAnswer(bool userPickedAnswer) {
+    bool correctAnswer = quizBrain.getCorrectAnswer();
+
+    Icon resultIcon;
+
+    if(correctAnswer == userPickedAnswer) {
+        resultIcon = Icon(Icons.check, color: Colors.green,);
+      }else{
+        resultIcon = Icon(Icons.close, color: Colors.red,);
+      }
+
+    setState(() {
+      if(quizBrain.isFinished()) {
+        //Tela de fim de jogo
+        Alert(
+          context: context,
+          type: AlertType.info,
+          title: "Fim de jogo",
+          desc: "Você chegou ao fim do jogo!!.",
+          buttons: [
+            DialogButton(
+              onPressed: (){ 
+                Navigator.pop(context);
+              },
+              width: 120.0,
+              child: Text(
+                'Ok',
+                style: TextStyle(color: Colors.white, fontSize: 20.0),
+              )
+            )
+          ]
+        ).show();
+
+        //reseta jogo
+        quizBrain.reset();
+        scoreKeeper = [];
+      }else{
+        scoreKeeper.add(resultIcon);
+        quizBrain.nextQuestion();
+      }
+    });
   }
 }
